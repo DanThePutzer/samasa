@@ -1,5 +1,5 @@
 Description: >
-  Samasa / CloudFormation script for basic infrastructure setup
+  Samasa / CloudFormation script for basic network setup
 
 Parameters:
   EnvironmentName:

@@ -1,0 +1,60 @@
+
+Description: >
+  Samasa / CloudFormation script for basic server setup
+
+Parameters:
+  EnvironmentName:
+    Description: Prefix to identify connected resources
+    Type: String
+
+Resources:
+  # - -
+  # Security Groups
+  # - -
+  SamasaBastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for instance hosting Jenkins and serving as deployment station for Kubernetes cluster
+      VpcId:
+        Fn:ImportValue:
+          !Sub ${EnvironmentName}-VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+
+  # - -
+  # EC2 Instances
+  # - -
+  SamasaBastion:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: SamasaBastion
+      ImageId: ami-0b1e2eeb33ce3d66f 
+      InstanceType: t2.micro
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - Ref: SamasaBastionSecurityGroup
+        SubnetId:
+          Fn:ImportValue:
+            !Sub ${EnvironmentName}-PUB-SN1
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Bastion
+      # UserData: !Base64 |
+      #   #!/bin/bash -ex
+      #   # put your script here
+
+Outputs:
+  # - - Bastion Public IP - -
+  JumpboxPublicIP:
+    Value: !GetAtt SamasaBastion.PublicIp
+    Description: Public IP to SSH into Bastion
