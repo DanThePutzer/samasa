@@ -16,7 +16,7 @@ Resources:
     Properties:
       GroupDescription: Security group for instance hosting Jenkins and serving as deployment station for Kubernetes cluster
       VpcId:
-        Fn:ImportValue:
+        Fn::ImportValue:
           !Sub ${EnvironmentName}-VPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -36,7 +36,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       KeyName: SamasaBastion
-      ImageId: ami-0b1e2eeb33ce3d66f 
+      ImageId: ami-003634241a8fcdec0 
       InstanceType: t2.micro
       NetworkInterfaces:
       - AssociatePublicIpAddress: true
@@ -44,7 +44,7 @@ Resources:
         GroupSet:
         - Ref: SamasaBastionSecurityGroup
         SubnetId:
-          Fn:ImportValue:
+          Fn::ImportValue:
             !Sub ${EnvironmentName}-PUB-SN1
       Tags:
         - Key: Name
