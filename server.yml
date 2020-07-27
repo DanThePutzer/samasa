@@ -23,6 +23,10 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrId: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 0
@@ -52,6 +56,18 @@ Resources:
       # UserData: !Base64 |
       #   #!/bin/bash -ex
       #   # put your script here
+
+
+  # - -
+  # S3 Buckets
+  # - -
+  SamasaKopsBocket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub ${EnvironmentName}-KopsBucket
+      VersioningConfiguration:
+        Status: Enabled
 
 Outputs:
   # - - Bastion Public IP - -
