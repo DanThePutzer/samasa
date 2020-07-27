@@ -24,9 +24,9 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrId: 0.0.0.0/0
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 0
@@ -53,24 +53,35 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Bastion
-      # UserData: !Base64 |
-      #   #!/bin/bash -ex
-      #   # put your script here
+      UserData: !Base64 |
+        #!/bin/bash
+        wget -q -O - http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key | sudo apt-key add -
+        sudo sh -c 'echo deb http://pkg.jenkins-ci.org/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+        sudo apt update -y
+        sudo apt install default-jre -y
+        sudo apt install default-jdk -y
+        sudo apt install jenkins -y
+        sudo systemctl start jenkins
+        sudo apt install awscli -y
+        curl -LO https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
+        chmod +x kops-linux-amd64
+        sudo mv kops-linux-amd64 /usr/local/bin/kops
+
 
 
   # - -
   # S3 Buckets
   # - -
-  SamasaKopsBocket:
+  SamasaKopsBucket:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
+    # DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub ${EnvironmentName}-KopsBucket
+      BucketName: samasa-kops-bucket
       VersioningConfiguration:
         Status: Enabled
 
 Outputs:
   # - - Bastion Public IP - -
-  JumpboxPublicIP:
+  BastionPublicIP:
     Value: !GetAtt SamasaBastion.PublicIp
     Description: Public IP to SSH into Bastion
