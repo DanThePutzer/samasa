@@ -1,0 +1,255 @@
+Description: >
+  Samasa / CloudFormation script for basic infrastructure setup
+
+Parameters:
+  EnvironmentName:
+    Description: Prefix to identify connected resources
+    Type: String
+
+  VpcCIDR:
+    Description: IP address range for VPC
+    Type: String
+  
+  PublicSubnet1CIDR:
+    Description: IP address range for public subnet 1
+    Type: String
+  
+  PublicSubnet2CIDR:
+    Description: IP address range for public subnet 1
+    Type: String
+
+  PrivateSubnet1CIDR:
+    Description: IP address range for public subnet 1
+    Type: String
+  
+  PrivateSubnet2CIDR:
+    Description: IP address range for public subnet 1
+    Type: String
+
+
+Resources:
+
+  # - -
+  # VPC
+  # - -
+  SamasaVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-VPC
+
+  # - -
+  # Internet Gateway
+  # - -
+  SamasaInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-InternetGateway
+  SamasaInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref SamasaVPC
+      InternetGatewayId: !Ref SamasaInternetGateway
+
+  # - -
+  # Subnets
+  # - -
+
+  # Public
+  SamasaPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      VpcId: !Ref SamasaVPC
+      CidrBlock: !Ref PublicSubnet1CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Pub1
+  
+  SamasaPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs '']
+      VpcId: !Ref SamasaVPC
+      CidrBlock: !Ref PublicSubnet2CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Pub2
+
+  # Private
+  SamasaPrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      VpcId: !Ref SamasaVPC
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Pri1
+
+  SamasaPrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs '']
+      VpcId: !Ref SamasaVPC
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Pri2
+
+  # - -
+  # NAT Gateways
+  # - -
+  
+  # EIPs
+  SamasaNat1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: SamasaInternetGateway
+    Properties:
+      Domain: vpc
+  
+  SamasaNat2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: SamasaInternetGateway
+    Properties:
+      Domain: vpc
+
+  # NAT Gateways
+  SamasaNat1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt SamasaNat1EIP.AllocationId
+      SubnetId: !Ref SamasaPublicSubnet1
+  
+  SamasaNat2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt SamasaNat2EIP.AllocationId
+      SubnetId: !Ref SamasaPublicSubnet2
+
+  # - -
+  # Routing
+  # - -
+  
+  # Private Subnet 1
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SamasaVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PrivateRoutes1
+
+  DefaultRoutePrivate1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref SamasaNat1
+
+  PrivateRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SamasaPrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+  
+  # Private Subnet 2
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SamasaVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PrivateRoutes2
+
+  DefaultRoutePrivate2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref SamasaNat2
+
+  PrivateRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SamasaPrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+
+  # Public Subnets
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SamasaVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-PublicRoutes
+  
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref SamasaInternetGateway
+
+  PublicRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SamasaPublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  
+  PublicRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SamasaPublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+Outputs:
+  # - - VPC - -
+  SamasaVPCID:
+    Description: VPC ID for use with server stack
+    Value: !Ref SamasaVPC
+    Export:
+      Name: !Sub ${EnvironmentName}-VPCID
+  
+  # - - Subnets - -
+  PublicSubnet1:
+    Description: Reference to Public Subnet 1
+    Value: !Ref SamasaPublicSubnet1
+    Export: 
+      Name: !Sub ${EnvironmentName}-PUB-SN1
+  
+  PublicSubnet2:
+    Description: Reference to Public Subnet 2
+    Value: !Ref SamasaPublicSubnet2
+    Export: 
+      Name: !Sub ${EnvironmentName}-PUB-SN2
+  
+  PrivateSubnet1:
+    Description: Reference to Private Subnet 1
+    Value: !Ref SamasaPrivateSubnet1
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRI-SN1
+  
+  PrivateSubnet2:
+    Description: Reference to Private Subnet 2
+    Value: !Ref SamasaPrivateSubnet2
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRI-SN2
+
+  # - - Subnet Lists - -
+  PublicSubnets:
+    Description: Reference to list of public subnets
+    Value: !Join [',', [!Ref SamasaPublicSubnet1, !Ref SamasaPublicSubnet2]]
+    Export: 
+      Name: !Sub ${EnvironmentName}-PUB-NETS
+
+  PrivateSubnets:
+    Description: Reference to list of private subnets
+    Value: !Join [',', [!Ref SamasaPrivateSubnet1, !Ref SamasaPrivateSubnet2]]
+    Export: 
+      Name: !Sub ${EnvironmentName}-PRI-NETS
