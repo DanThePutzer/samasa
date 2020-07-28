@@ -55,6 +55,7 @@ Resources:
           Value: !Sub ${EnvironmentName}-Bastion
       UserData: !Base64 |
         #!/bin/bash
+        sudo apt install python-pip -y
         echo "- - - - - - - Installing Jenkins & Dependencies - - - - - - -"
         wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
         sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
@@ -62,12 +63,14 @@ Resources:
         sudo apt install default-jre -y
         sudo apt install default-jdk -y
         sudo apt install jenkins -y
-        sudo systemctl start jenkins
         echo "- - - - - - - Installing Docker - - - - - - -"
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
         sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
         sudo apt install docker-ce -y
         sudo systemctl start docker
+        echo "- - - - - - - Elevating Jenkins User - - - - - - - - -"
+        sudo usermod -aG docker jenkins
+        sudo systemctl start jenkins
         echo "- - - - - - - Installing AWS CLI - - - - - - -"
         sudo apt install awscli -y
         echo "- - - - - - - Installing Hadolint - - - - - - -"

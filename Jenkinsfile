@@ -1,6 +1,7 @@
 node {
     def image
     def registry = 'danceladus/samasa'
+    checkout scm
 
     stage('Setup') {
         sh 'pip install -r requirements.txt'
