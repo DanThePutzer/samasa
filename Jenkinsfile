@@ -14,13 +14,12 @@ node {
     }
 
     stage('Build') {
-        image = docker.build("<image name>")
+        image = docker.build(registry)
     }
 
     stage('Push') {
-        docker.withRegistry(registry, 'dockerhub') {
-            app.push("${env.BUILD_NUMBER}")
-            app.push("latest")
+        docker.withRegistry('', 'dockerhub') {
+            image.push()
         }
     }
 }
