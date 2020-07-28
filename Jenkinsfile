@@ -13,13 +13,11 @@ pipeline {
         }
         
         stage('Build') {
-            dockerfile {
-                filename 'Dockerfile'
-                registryUrl 'https://myregistry.com/'
-                registryCredentialsId 'dockerHub'
-            }
-            steps {
-
+            agent {
+                dockerfile {
+                    filename 'Dockerfile'
+                    registryCredentialsId 'dockerHub'
+                }
             }
         }
     }
