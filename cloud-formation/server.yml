@@ -55,7 +55,9 @@ Resources:
           Value: !Sub ${EnvironmentName}-Bastion
       UserData: !Base64 |
         #!/bin/bash
+        sudo apt update -y
         sudo apt install python-pip -y
+        sudo apt install pylint -y
         echo "- - - - - - - Installing Jenkins & Dependencies - - - - - - -"
         wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
         sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
@@ -63,20 +65,23 @@ Resources:
         sudo apt install default-jre -y
         sudo apt install default-jdk -y
         sudo apt install jenkins -y
+        sudo systemctl start jenkins
         echo "- - - - - - - Installing Docker - - - - - - -"
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
         sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
         sudo apt install docker-ce -y
         sudo systemctl start docker
         echo "- - - - - - - Elevating Jenkins User - - - - - - - - -"
+        sudo usermod -aG users jenkins
         sudo usermod -aG docker jenkins
-        sudo systemctl start jenkins
+        sudo systemctl restart jenkins
         echo "- - - - - - - Installing AWS CLI - - - - - - -"
         sudo apt install awscli -y
         echo "- - - - - - - Installing Hadolint - - - - - - -"
         wget https://github.com/hadolint/hadolint/releases/download/v1.18.0/hadolint-Linux-x86_64
         sudo mv hadolint-Linux-x86_64 hadolint
         sudo mv hadolint /usr/local/bin
+        sudo chmod +x /usr/local/bin/hadolint
         echo "- - - - - - - Installing Kops - - - - - - -"
         curl -LO https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
         chmod +x kops-linux-amd64
