@@ -1,0 +1,98 @@
+Description: >
+  Samasa / CloudFormation script for EKS cluster setup
+
+Parameters:
+  EnvironmentName:
+    Description: Prefix to identify connected resources
+    Type: String
+
+Resources:
+  # - -
+  # IAM Roles
+  # - -
+  SamasaClusterIAM:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - eks.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+  
+  SamasaClusterNodeIAM:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
+  # - -
+  # Security Groups
+  # - -
+  SamasaClusterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EKS cluster
+      VpcId:
+        Fn::ImportValue:
+          !Sub ${EnvironmentName}-VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+
+  # - -
+  # EKS Cluster
+  # - -
+  SamasaCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: SamasaCluster
+      RoleArn: !GetAtt SamasaClusterIAM.Arn
+      ResourcesVpcConfig:
+        SecurityGroupIds:
+          - !Ref SamasaClusterSecurityGroup
+        SubnetIds:
+          - Fn::ImportValue:
+              !Sub ${EnvironmentName}-PRI-SN1
+          - Fn::ImportValue:
+              !Sub ${EnvironmentName}-PRI-SN2
+
+  SamasaClusterNodes:
+    Type: AWS::EKS::Nodegroup
+    DependsOn: SamasaCluster
+    Properties:
+      ClusterName: SamasaCluster
+      InstanceTypes:
+        - t2.micro
+      NodegroupName: SamasaNodeGroup
+      NodeRole: !GetAtt SamasaClusterNodeIAM.Arn
+      ScalingConfig:
+        MinSize: 1
+        DesiredSize: 2
+        MaxSize: 3
+      Subnets:
+        - Fn::ImportValue:
+              !Sub ${EnvironmentName}-PRI-SN1
+        - Fn::ImportValue:
+            !Sub ${EnvironmentName}-PRI-SN2

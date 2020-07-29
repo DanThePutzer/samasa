@@ -1,6 +1,6 @@
 
 Description: >
-  Samasa / CloudFormation script for basic server setup
+  Samasa / CloudFormation script for Bastion setup
 
 Parameters:
   EnvironmentName:
@@ -11,7 +11,7 @@ Resources:
   # - -
   # IAM Roles
   # - -
-  SamasaClusterIAM:
+  SamasaBastionIAMRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -20,26 +20,21 @@ Resources:
           Principal:
             Service:
             - eks.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-  
-  SamasaClusterNodeIAM:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
             - ec2.amazonaws.com
           Action:
           - sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  # - -
+  # IAM Profiles
+  # - -
+  SamasaBastionIAMProfile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn: SamasaBastionIAMRole
+    Properties: 
+      Roles:
+        - Ref: SamasaBastionIAMRole
 
   # - -
   # Security Groups
@@ -66,19 +61,6 @@ Resources:
           ToPort: 65535
           CidrIp: 0.0.0.0/0
 
-  SamasaClusterSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for EKS cluster
-      VpcId:
-        Fn::ImportValue:
-          !Sub ${EnvironmentName}-VPCID
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 0
-          ToPort: 65535
-          CidrIp: 0.0.0.0/0
-
   # - -
   # EC2 Instances
   # - -
@@ -86,6 +68,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       KeyName: SamasaBastion
+      IamInstanceProfile: !Ref SamasaBastionIAMProfile
       ImageId: ami-003634241a8fcdec0 
       InstanceType: t2.micro
       NetworkInterfaces:
@@ -121,64 +104,16 @@ Resources:
         sudo usermod -aG users jenkins
         sudo usermod -aG docker jenkins
         sudo systemctl restart jenkins
-        echo "- - - - - - - Installing AWS CLI - - - - - - -"
-        sudo apt install awscli -y
         echo "- - - - - - - Installing Hadolint - - - - - - -"
         wget https://github.com/hadolint/hadolint/releases/download/v1.18.0/hadolint-Linux-x86_64
         sudo mv hadolint-Linux-x86_64 hadolint
         sudo mv hadolint /usr/local/bin
         sudo chmod +x /usr/local/bin/hadolint
-        echo "- - - - - - - Installing Kops - - - - - - -"
-        curl -LO https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
-        chmod +x kops-linux-amd64
-        sudo mv kops-linux-amd64 /usr/local/bin/kops
+        echo "- - - - - - - Installing Kubectl - - - - - - -"
+        curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.17.7/2020-07-08/bin/linux/amd64/kubectl
+        sudo chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin
         echo "- - - - - - - All Done - - - - - - -"
-
-  # - -
-  # EKS Cluster
-  # - -
-  SamasaCluster:
-    Type: AWS::EKS::Cluster
-    Properties:
-      Name: SamasaCluster
-      RoleArn: !GetAtt SamasaClusterIAM.Arn
-      ResourcesVpcConfig:
-        SecurityGroupIds:
-          - !Ref SamasaClusterSecurityGroup
-        SubnetIds:
-          - Fn::ImportValue:
-              !Sub ${EnvironmentName}-PRI-SN1
-          - Fn::ImportValue:
-              !Sub ${EnvironmentName}-PRI-SN2
-
-  SamasaClusterNodes:
-    Type: AWS::EKS::Nodegroup
-    Properties:
-      ClusterName: SamasaCluster
-      NodegroupName: SamasaNodeGroup
-      NodeRole: !GetAtt SamasaClusterNodeIAM.Arn
-      ScalingConfig:
-        MinSize: 1
-        DesiredSize: 2
-        MaxSize: 3
-      Subnets:
-        - Fn::ImportValue:
-              !Sub ${EnvironmentName}-PRI-SN1
-        - Fn::ImportValue:
-            !Sub ${EnvironmentName}-PRI-SN2
-
-
-
-  # - -
-  # S3 Buckets
-  # - -
-  SamasaKopsBucket:
-    Type: AWS::S3::Bucket
-    # DeletionPolicy: Retain
-    Properties:
-      BucketName: samasa-kops-bucket
-      VersioningConfiguration:
-        Status: Enabled
 
 Outputs:
   # - - Bastion Public IP - -
