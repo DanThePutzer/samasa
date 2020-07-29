@@ -24,6 +24,22 @@ Resources:
           - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+  
+  SamasaClusterNodeIAM:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
   # - -
   # Security Groups
@@ -122,7 +138,7 @@ Resources:
   # EKS Cluster
   # - -
   SamasaCluster:
-    Type: 'AWS::EKS::Cluster'
+    Type: AWS::EKS::Cluster
     Properties:
       Name: SamasaCluster
       RoleArn: !GetAtt SamasaClusterIAM.Arn
@@ -134,6 +150,22 @@ Resources:
               !Sub ${EnvironmentName}-PRI-SN1
           - Fn::ImportValue:
               !Sub ${EnvironmentName}-PRI-SN2
+
+  SamasaClusterNodes:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: SamasaCluster
+      NodegroupName: SamasaNodeGroup
+      NodeRole: !GetAtt SamasaClusterNodeIAM.Arn
+      ScalingConfig:
+        MinSize: 1
+        DesiredSize: 2
+        MaxSize: 3
+      Subnets:
+        - Fn::ImportValue:
+              !Sub ${EnvironmentName}-PRI-SN1
+        - Fn::ImportValue:
+            !Sub ${EnvironmentName}-PRI-SN2
 
 
 
