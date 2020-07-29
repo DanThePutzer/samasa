@@ -28,7 +28,7 @@ node {
         withAWS(credentials:'aws') {
             sh 'aws eks --region us-west-2 update-kubeconfig --name SamasaCluster'
             sh 'kubectl get svc'
-            sh 'kubectl apply -f deployment.yaml'
+            sh 'kubectl apply -f deployment.yml'
         }
     }
 }
