@@ -23,4 +23,10 @@ node {
             image.push()
         }
     }
+
+    stage('Deploy') {
+        sh 'aws eks --region us-west-2 update-kubeconfig --name SamasaCluster'
+        sh 'kubectl get svc'
+        sh 'kubectl apply -f deployment.yaml'
+    }
 }

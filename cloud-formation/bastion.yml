@@ -104,6 +104,8 @@ Resources:
         sudo usermod -aG users jenkins
         sudo usermod -aG docker jenkins
         sudo systemctl restart jenkins
+        echo "- - - - - - - Installing AWS CLI - - - - - - -"
+        sudo apt install awscli -y
         echo "- - - - - - - Installing Hadolint - - - - - - -"
         wget https://github.com/hadolint/hadolint/releases/download/v1.18.0/hadolint-Linux-x86_64
         sudo mv hadolint-Linux-x86_64 hadolint
