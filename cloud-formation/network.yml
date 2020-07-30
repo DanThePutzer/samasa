@@ -69,6 +69,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
       VpcId: !Ref SamasaVPC
       CidrBlock: !Ref PublicSubnet1CIDR
       Tags:
@@ -83,6 +84,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
       VpcId: !Ref SamasaVPC
       CidrBlock: !Ref PublicSubnet2CIDR
       Tags:
