@@ -6,4 +6,4 @@ def hello():                      # call method hello
     return "Issa Flask App!"         # which returns "hello world"
 
 if __name__ == "__main__":        # on running python app.py
-    app.run()    
+    app.run(port=80)    

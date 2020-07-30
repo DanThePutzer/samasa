@@ -74,9 +74,9 @@ Resources:
           - !Ref SamasaClusterSecurityGroup
         SubnetIds:
           - Fn::ImportValue:
-              !Sub ${EnvironmentName}-PUB-SN1
+              !Sub ${EnvironmentName}-PRI-SN1
           - Fn::ImportValue:
-              !Sub ${EnvironmentName}-PUB-SN2
+              !Sub ${EnvironmentName}-PRI-SN2
 
   SamasaClusterNodes:
     Type: AWS::EKS::Nodegroup
@@ -89,10 +89,10 @@ Resources:
       NodeRole: !GetAtt SamasaClusterNodeIAM.Arn
       ScalingConfig:
         MinSize: 1
-        DesiredSize: 1
+        DesiredSize: 2
         MaxSize: 2
       Subnets:
         - Fn::ImportValue:
-              !Sub ${EnvironmentName}-PUB-SN1
+              !Sub ${EnvironmentName}-PRI-SN1
         - Fn::ImportValue:
-            !Sub ${EnvironmentName}-PUB-SN2
+            !Sub ${EnvironmentName}-PRI-SN2
