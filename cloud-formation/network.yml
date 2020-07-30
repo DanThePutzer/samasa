@@ -6,6 +6,10 @@ Parameters:
     Description: Prefix to identify connected resources
     Type: String
 
+  ClusterName:
+    Description: Name of kubernetes cluster to be deployed
+    Type: String
+
   VpcCIDR:
     Description: IP address range for VPC
     Type: String
@@ -70,6 +74,10 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Pub1
+        - Key: kubernetes.io/cluster/${ClusterName}
+          Value: shared
+        - Key: kubernetes.io/role/elb
+          Value: 1
   
   SamasaPublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -80,6 +88,10 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Pub2
+        - Key: !Sub kubernetes.io/cluster/${ClusterName}
+          Value: shared
+        - Key: kubernetes.io/role/elb
+          Value: 1
 
   # Private
   SamasaPrivateSubnet1:
@@ -91,6 +103,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Pri1
+        - Key: !Sub kubernetes.io/cluster/${ClusterName}
+          Value: shared
 
   SamasaPrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -101,6 +115,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-Pri2
+        - Key: !Sub kubernetes.io/cluster/${ClusterName}
+          Value: shared
 
   # - -
   # NAT Gateways

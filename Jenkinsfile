@@ -32,9 +32,9 @@ node {
         }
     }
 
-    stage('Expose') {
-        withAWS(credentials:'aws') {
-            sh 'kubectl port-forward deployment/samasa-cluster 8000:80'
-        }
-    }
+    // stage('Expose') {
+    //     withAWS(credentials:'aws') {
+    //         sh 'kubectl port-forward deployment/samasa-cluster 8000:80'
+    //     }
+    // }
 }
