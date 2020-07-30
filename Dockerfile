@@ -17,7 +17,7 @@
 # # Running application at container launch
 # CMD ["python", "app.py"]
 
-FROM nginx:1.19.1
+FROM nginx
 
 ## Step 1:
 RUN rm /usr/share/nginx/html/index.html
