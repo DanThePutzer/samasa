@@ -17,4 +17,5 @@ spec:
         - name: samasa
           image: danceladus/samasa
           ports:
-            - containerPort: 80
+            - name: samasa-port
+              containerPort: 80

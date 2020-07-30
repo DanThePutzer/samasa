@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: samasa-balancer
+  lables:
+    app: samasa-balancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: samasa-green
+  ports:
+    - port: 80
+      targetPort: 80

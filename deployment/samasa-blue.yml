@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: samasa-blue
+  labels:
+    app: samasa-blue
+spec:
+  replicas: 1
+  selector:
+    app: samasa-blue
+  template:
+    metadata:
+      labels:
+        app: samasa-blue
+    spec:
+      containers:
+      - name: samasa-blue
+        image: danceladus/samasa
+        ports:
+        - containerPort: 80

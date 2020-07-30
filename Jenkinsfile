@@ -28,13 +28,20 @@ node {
         withAWS(credentials:'aws') {
             sh 'aws eks --region us-west-2 update-kubeconfig --name SamasaCluster'
             sh 'kubectl get svc'
-            sh 'kubectl apply -f deployment/cluster-deployment.yml'
+            sh 'kubectl apply -f deployment/samasa-blue.yml'
+            sh 'kubectl apply -f deployment/samasa-green.yml'
+            sh 'kubectl get deployments'
+            sh 'kubectl apply -f deployment/load-balancer-blue.yml'
         }
     }
 
-    // stage('Expose') {
-    //     withAWS(credentials:'aws') {
-    //         sh 'kubectl port-forward deployment/samasa-cluster 8000:80'
-    //     }
-    // }
+    stage('Approval') {
+        input "Switch to green branch?"
+    }
+
+    stage('Switch') {
+        withAWS(credentials:'aws') {
+            sh 'kubectl apply -f deployment/load-balancer-green.yml'
+        }
+    }
 }
