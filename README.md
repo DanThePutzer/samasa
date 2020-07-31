@@ -14,7 +14,7 @@ The whole thing serves as submission for the cap stone project the [Cloud DevOps
 
 The **cloud-formation** directory in the repository contains scripts to deploy all the necessary infrastructure for this project. The table below outlines which file does what.
 
-| **CloudFormation Script** | **Description**                                                                                        |
+| **Script**                | **Description**                                                                                        |
 |---------------------------|--------------------------------------------------------------------------------------------------------|
 | **network.yml**           | Deploys all the necessary network infrastructure (VPC, Subnets, NAT & Internet Gateways etc.)          |
 | **bastion.yml**           | Deploys an EC2 instance that serves as a bastion host to manage Jenkins and the Kubernetes cluster     |
