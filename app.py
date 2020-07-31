@@ -5,8 +5,5 @@ app = Flask(__name__)             # create an app instance
 def hello():                      # call method hello
     return "Issa Flask App!"         # which returns "hello world"
 
-this is just to test if the linter works
-
-
 if __name__ == "__main__":        # on running python app.py
     app.run(port=80)    
