@@ -107,6 +107,8 @@ Resources:
           Value: !Sub ${EnvironmentName}-Pri1
         - Key: !Sub kubernetes.io/cluster/${ClusterName}
           Value: shared
+        - Key: kubernetes.io/role/internal-elb
+          Value: 1
 
   SamasaPrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -119,6 +121,8 @@ Resources:
           Value: !Sub ${EnvironmentName}-Pri2
         - Key: !Sub kubernetes.io/cluster/${ClusterName}
           Value: shared
+        - Key: kubernetes.io/role/internal-elb
+          Value: 1
 
   # - -
   # NAT Gateways

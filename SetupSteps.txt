@@ -1,5 +1,0 @@
-1. Activate Jenkins
-2. Install Jenkins Plugins
-3. Create Pipeline with Blue Ocean
-4. Add dockerhub credentials
-5. Add aws credentials
